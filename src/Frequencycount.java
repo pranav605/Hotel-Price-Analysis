@@ -1,4 +1,3 @@
-// Note: need to adjust path at fileArr based on actual data file location 
 import java.io.FileReader;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -22,18 +21,18 @@ public class FrequencyCount {
         // Array of file names
         String[] fileArr = {"src/data/BookingCA.json", "src/data/HotelsCA.json", "src/data/ExpediaCA.json"};
 
-        // TreeMap to store the frequency count of words, sorted alphabetically
-        TreeMap<String, Integer> wordCountTM = new TreeMap<>();
-
         Gson gsonObj = new Gson();
         Type type = new TypeToken<Map<String, List<HotelData>>>(){}.getType();
 
         // Process each file
         for (String fileName : fileArr) {
+            // TreeMap to store the frequency count of words for the current file
+            TreeMap<String, Integer> wordCountTM = new TreeMap<>();
+
             try (FileReader fReader = new FileReader(fileName)) {
                 // Load the JSON data from file
                 Map<String, List<HotelData>> hotelsData = gsonObj.fromJson(fReader, type);
-                
+
                 // Process each hotel data
                 for (List<HotelData> hotels : hotelsData.values()) {
                     for (HotelData hotel : hotels) {
@@ -60,16 +59,17 @@ public class FrequencyCount {
                     }
                 }
 
+                // Print the word frequencies for the current file
+                System.out.println("Word frequencies for " + fileName + ":");
+                wordCountTM.entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                    .forEach(entry -> System.out.println(entry.getKey() + ": " + entry.getValue()));
+
             } catch (Exception e) {
                 System.out.println("Error processing file: " + fileName);
                 e.printStackTrace();
             }
         }
-
-        // Sort and print the word frequencies, sorted by frequency in descending order
-        wordCountTM.entrySet().stream()
-                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                 .forEach(entry -> System.out.println(entry.getKey() + ": " + entry.getValue()));
     }
 
     // Helper method to process text and update word frequency
