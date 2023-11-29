@@ -1,11 +1,6 @@
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
+import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -63,48 +58,79 @@ public class Wordcompletion {
             }
         }
     }
+
     public static void main(String[] args) {
         try {
-            String[] fileNames = {"HotelsExpediaBooking.json"}; // Add all your file names
-
-            for (String fileName : fileNames) {
-                processFile(fileName);
-            }
+            processFile("dictionary.csv"); // Process the dictionary file
             System.out.println("------Word Completion------");
             // Taking user input for prefix
             Scanner scanner = new Scanner(System.in);
             System.out.print("Enter a prefix: ");
             String prefix = scanner.nextLine().toLowerCase(); // User inputs a prefix
-            scanner.close();
 
             // Getting word completions for the input prefix
             List<String> suggestions = getWordCompletions(prefix);
 
+            prioritizeCountries(suggestions);
+
             if (!suggestions.isEmpty()) {
-                System.out.print("Related Words: {" + String.join(",", suggestions) + "}");
+                System.out.println("Related Words:");
+                int count = 0;
+                for (String suggestion : suggestions) {
+                    if (count >= 7) {
+                        break;
+                    }
+                    System.out.println(suggestion);
+                    count++;
+                }
             } else {
                 System.out.println("No suggestions available.");
             }
+
+            scanner.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-        public static void processFile(String fileName) throws IOException {
-            JsonParser parser = new JsonParser();
-            JsonObject jsonObject = parser.parse(new FileReader(fileName)).getAsJsonArray().get(0).getAsJsonObject();
+    public static void processFile(String fileName) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        String line;
 
-            for (JsonElement element : jsonObject.entrySet().iterator().next().getValue().getAsJsonArray()) {
-                JsonObject hotel = element.getAsJsonObject();
-                String name = hotel.get("name").getAsString().toLowerCase(); // Extracting hotel names
-                String[] words = name.split("[^a-zA-Z]"); // Splitting based on non-alphabetic characters
-
-                for (String word : words) {
-                    if (!word.isEmpty()) {
-                        insertIntoTrie(word);
-                    }
-                }
+        while ((line = reader.readLine()) != null) {
+            String[] cityCountry = line.split(","); // Assuming CSV file contains city, country
+            if (cityCountry.length >= 2) {
+                String city = cityCountry[0].trim();
+                String country = cityCountry[1].trim();
+                String fullLocation = city + ", " + country;
+                insertIntoTrie(fullLocation.toLowerCase()); // Convert words to lowercase before inserting
             }
         }
-}
+        reader.close();
+    }
 
+    public static void prioritizeCountries(List<String> suggestions) {
+        List<String> canadaCities = new ArrayList<>();
+        List<String> ukCities = new ArrayList<>();
+        List<String> usaCities = new ArrayList<>();
+        List<String> otherCities = new ArrayList<>();
+
+        for (String suggestion : suggestions) {
+            if (suggestion.toLowerCase().contains(", canada")) {
+                canadaCities.add(suggestion);
+            } else if (suggestion.toLowerCase().contains(", united kingdom")) {
+                ukCities.add(suggestion);
+            } else if (suggestion.toLowerCase().contains(", usa")) {
+                usaCities.add(suggestion);
+            } else {
+                otherCities.add(suggestion);
+            }
+        }
+
+        suggestions.clear();
+        suggestions.addAll(canadaCities);
+        suggestions.addAll(ukCities);
+        suggestions.addAll(usaCities);
+        suggestions.addAll(otherCities);
+    }
+}
