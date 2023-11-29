@@ -6,59 +6,75 @@ public class Searchfrequency {
 
     public static void main(String[] args) {
         try {
-            Map<String, Integer> destinationFrequency = indexMultipleFiles();
-            displayMostSearchedDestinations(destinationFrequency);
+            updateSearches();
+            Map<String, Integer> searchFrequency = indexMultipleFiles();
+            displaySearchFrequency(searchFrequency);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    public static void updateSearches() throws IOException {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter a destination:");
+        String destination = scanner.nextLine();
+
+        // Read existing data from the JSON file
+        String filePath = "userSearches.json"; // Replace with your JSON file containing user search history
+        JsonArray jsonArray;
+        if (new File(filePath).exists()) {
+            BufferedReader reader = new BufferedReader(new FileReader(filePath));
+            jsonArray = JsonParser.parseReader(reader).getAsJsonArray();
+            reader.close();
+        } else {
+            jsonArray = new JsonArray();
+        }
+
+        // Append the new destination to the JSON array
+        JsonObject newSearch = new JsonObject();
+        newSearch.addProperty("search_term", destination);
+        jsonArray.add(newSearch);
+
+        // Write the updated data back to the JSON file
+        FileWriter writer = new FileWriter(filePath);
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        writer.write(gson.toJson(jsonArray));
+        writer.close();
+    }
+
     public static Map<String, Integer> indexMultipleFiles() throws IOException {
-        String[] files = {"HotelsExpediaBooking.json"};
+        String filePath = "userSearches.json"; // Replace with your JSON file containing user search history
 
-        Map<String, Integer> destinationFrequency = new HashMap<>();
+        Map<String, Integer> searchFrequency = new HashMap<>();
 
-        for (String filePath : files) {
+        if (new File(filePath).exists()) {
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
             JsonArray jsonArray = JsonParser.parseReader(reader).getAsJsonArray();
-            processJsonArray(jsonArray, destinationFrequency);
+            processJsonArray(jsonArray, searchFrequency);
             reader.close();
         }
 
-        return destinationFrequency;
+        return searchFrequency;
     }
 
-    public static void processJsonArray(JsonArray jsonArray, Map<String, Integer> destinationFrequency) {
+    public static void processJsonArray(JsonArray jsonArray, Map<String, Integer> searchFrequency) {
         for (JsonElement element : jsonArray) {
             JsonObject jsonObject = element.getAsJsonObject();
 
-            for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
-                String location = entry.getKey();
-                JsonArray hotelsArray = entry.getValue().getAsJsonArray();
-
-                for (JsonElement hotelElement : hotelsArray) {
-                    JsonObject hotelObject = hotelElement.getAsJsonObject();
-                    if (hotelObject.has("location")) {
-                        String hotelLocation = hotelObject.get("location").getAsString();
-                        int frequency = destinationFrequency.getOrDefault(hotelLocation, 0);
-                        destinationFrequency.put(hotelLocation, frequency + 1);
-                    }
-                }
+            if (jsonObject.has("search_term")) {
+                String searchTerm = jsonObject.get("search_term").getAsString();
+                int frequency = searchFrequency.getOrDefault(searchTerm, 0);
+                searchFrequency.put(searchTerm, frequency + 1);
             }
         }
     }
 
-    public static void displayMostSearchedDestinations(Map<String, Integer> destinationFrequency) {
+    public static void displaySearchFrequency(Map<String, Integer> searchFrequency) {
         System.out.println("***********************************");
-        System.out.println("***********************************");
-        System.out.println("Most Searched Destinations this year:");
+        System.out.println("Search Frequency:");
 
-        destinationFrequency.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .limit(5) // Change this number to display more top destinations
-                .forEach(entry -> System.out.println(entry.getKey() + ": " + entry.getValue() + " time"));
+        searchFrequency.entrySet().forEach(entry -> System.out.println(entry.getKey() + ": " + entry.getValue() + " times"));
 
-        System.out.println("***********************************");
         System.out.println("***********************************");
     }
 }
