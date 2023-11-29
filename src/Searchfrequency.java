@@ -5,7 +5,7 @@ import java.util.*;
 public class Searchfrequency {
         public static void updateSearches() throws IOException {
         // Read data from parameters.json
-        String parametersFilePath = "parameters.json"; // Replace with your parameters file path
+        String parametersFilePath = "parameters.json"; 
         JsonObject parameters;
         try (BufferedReader reader = new BufferedReader(new FileReader(parametersFilePath))) {
             parameters = JsonParser.parseReader(reader).getAsJsonObject();
