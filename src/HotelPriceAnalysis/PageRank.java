@@ -18,8 +18,7 @@ import java.util.*;
 
 public class PageRank {
 
-    public List<Page> getPageRank(String searchElement) throws Exception{
-        String[] files = {"D:\\ACC Project\\ACCProject\\hotels.json","D:\\ACC Project\\ACCProject\\airbnb.json","D:\\ACC Project\\ACCProject\\booking.json"};
+    public List<Page> getPageRank(String searchElement, String[] files) throws Exception{
         Map<String, Integer> wordCounts = new HashMap<>();
         int c = 0;
         String[] s ={"","",""};
@@ -92,7 +91,9 @@ public class PageRank {
 
         return rank;
     }
-
+//    private static int calculateRankValue(JsonObject obj){
+//
+//    }
     private static int countOccurrences(String text, String keyword) {
         int count = 0;
         int index = text.indexOf(keyword);
