@@ -1,0 +1,32 @@
+[
+  {
+    "city": "toronto",
+    "state": "ontario",
+    "country": "canada"
+  },
+  {
+    "city": "windsor",
+    "state": "ontario",
+    "country": "canada"
+  },
+  {
+    "city": "montreal",
+    "state": "quebec",
+    "country": "canada"
+  },
+  {
+    "city": "london",
+    "state": "ontario",
+    "country": "canada"
+  },
+  {
+    "city": "vancouver",
+    "state": "british columbia",
+    "country": "canada"
+  },
+  {
+    "city": "sudbury",
+    "state": "ontario",
+    "country": "canada"
+  }
+]
