@@ -139,6 +139,20 @@ public class Main {
         }catch (Exception e){
             e.printStackTrace();
         }
-
+        
+        // Integrate search frequency
+        try {
+            Searchfrequency.updateSearches();
+            Map<String, Integer> searchFrequency = Searchfrequency.indexMultipleFiles();
+            System.out.println("Do you want to see the most searched destinations? (yes/no): ");
+            String choice = s.next();
+            if (choice.equalsIgnoreCase("yes")) {
+                Searchfrequency.displaySearchFrequency(searchFrequency);
+            } else {
+                System.out.println("Thank you!");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
