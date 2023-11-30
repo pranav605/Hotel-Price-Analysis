@@ -1,5 +1,4 @@
 import HotelPriceAnalysis.InvertedIndex;
-import HotelPriceAnalysis.PageRank;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -10,41 +9,113 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-import static HotelPriceAnalysis.PageRank.getTopDeals;
 import Validation.Validation;
 import java.util.List;
 import java.util.Map;
 
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         //User input for web crawling with Pattern check, word completion and spell checking
         //crawling and HTML parsing
         HotelsCrawler hc = new HotelsCrawler();
-
+        SpellCheck spellChecker = new SpellCheck();
+        Wordcompletion wordcompletion = new Wordcompletion();
+        spellChecker.loadDictionary("D:\\ACC Project\\ACCProject\\src\\dictionary.csv");
+        wordcompletion.processFile("D:\\ACC Project\\ACCProject\\src\\dictionary.csv");
         Scanner s = new Scanner(System.in);
         LocalDate currentDate = LocalDate.now();
 
-        // Validate and input City 
+        // Validate and input City
         String cityName;
         while (true) {
             System.out.print("Enter city name: ");
             cityName = s.nextLine().trim();
-            if (!cityName.isEmpty() && cityName.matches("[a-zA-Z]+")) {
-                break;
+            if (cityName.length() <= 4) {
+                List<String> suggestions = wordcompletion.getWordCompletions(cityName);
+                wordcompletion.prioritizeCountries(suggestions);
+                if (!suggestions.isEmpty()) {
+                    System.out.println("Related Words:");
+                    int count = 0;
+                    for (String suggestion : suggestions) {
+                        if (count >= 7) {
+                            break;
+                        }
+                        System.out.println(suggestion);
+                        count++;
+                    }
+                } else {
+                    System.out.println("No suggestions available.");
+                    break;
+                }
+            } else {
+                if (!cityName.isEmpty() && cityName.matches("[a-zA-Z]+")) {
+                    int threshold = 2; // Adjust threshold as desired
+                    List<String> suggestions = spellChecker.getSuggestions(cityName, threshold);
+                    if (suggestions.isEmpty()) {
+                        System.out.println("No suggestions found.");
+                        break;
+                    } else {
+                        if (suggestions.size() == 1 && suggestions.get(0).equals("valid")) {
+                            break;
+                        }
+                        System.out.println("Did you mean:");
+                        for (String suggestion : suggestions) {
+                            System.out.println(suggestion);
+                        }
+                        System.out.println("Please try again");
+                    }
+                } else {
+                    System.out.println("Invalid city name. Please enter a valid name.");
+                }
+
+
             }
-            System.out.println("Invalid city name. Please enter a valid name.");
         }
-        
+
      // Validate and Input Province/State
         String provinceState;
         while (true) {
             System.out.print("Enter province/state: ");
             provinceState = s.nextLine().trim();
-            if (!provinceState.isEmpty() && provinceState.matches("[a-zA-Z]+")) {
-                break;
+            if (provinceState.length() <= 4) {
+                List<String> suggestions = wordcompletion.getWordCompletions(provinceState);
+                wordcompletion.prioritizeCountries(suggestions);
+                if (!suggestions.isEmpty()) {
+                    System.out.println("Related Words:");
+                    int count = 0;
+                    for (String suggestion : suggestions) {
+                        if (count >= 7) {
+                            break;
+                        }
+                        System.out.println(suggestion);
+                        count++;
+                    }
+                } else {
+                    System.out.println("No suggestions available.");
+                    break;
+                }
+            } else {
+                if (!provinceState.isEmpty() && provinceState.matches("[a-zA-Z]+")) {
+                    int threshold = 2; // Adjust threshold as desired
+                    List<String> suggestions = spellChecker.getSuggestions(provinceState, threshold);
+                    if (suggestions.isEmpty()) {
+                        System.out.println("No suggestions found.");
+                        break;
+                    } else {
+                        if (suggestions.size() == 1 && suggestions.get(0).equals("valid")) {
+                            break;
+                        }
+                        System.out.println("Did you mean:");
+                        for (String suggestion : suggestions) {
+                            System.out.println(suggestion);
+                        }
+                        System.out.println("Please try again");
+                    }
+                } else {
+                    System.out.println("Invalid province/state. Please enter a valid name.");
+                }
             }
-            System.out.println("Invalid province/state. Please enter a valid name.");
         }
 
         // Validate and Input Country
@@ -52,19 +123,53 @@ public class Main {
         while (true) {
             System.out.print("Enter country: ");
             country = s.nextLine().trim();
-            if (!country.isEmpty() && country.matches("[a-zA-Z]+")) {
-                break;
+            if (country.length() <= 4) {
+                List<String> suggestions = wordcompletion.getWordCompletions(country);
+                wordcompletion.prioritizeCountries(suggestions);
+                if (!suggestions.isEmpty()) {
+                    System.out.println("Related Words:");
+                    int count = 0;
+                    for (String suggestion : suggestions) {
+                        if (count >= 7) {
+                            break;
+                        }
+                        System.out.println(suggestion);
+                        count++;
+                    }
+                } else {
+                    System.out.println("No suggestions available.");
+                    break;
+                }
+            } else {
+                if (!country.isEmpty() && country.matches("[a-zA-Z]+")) {
+                    int threshold = 2; // Adjust threshold as desired
+                    List<String> suggestions = spellChecker.getSuggestions(country, threshold);
+                    if (suggestions.isEmpty()) {
+                        System.out.println("No suggestions found.");
+                        break;
+                    } else {
+                        if (suggestions.size() == 1 && suggestions.get(0).equals("valid")) {
+                            break;
+                        }
+                        System.out.println("Did you mean:");
+                        for (String suggestion : suggestions) {
+                            System.out.println(suggestion);
+                        }
+                        System.out.println("Please try again");
+                    }
+                } else {
+                    System.out.println("Invalid country. Please enter a valid name.");
+                }
             }
-            System.out.println("Invalid country. Please enter a valid name.");
         }
-        
+
         // Validate and Input Check-in Date
         LocalDate checkInDate = Validation.getValidatedDate(s, "Enter start date (YYYY-MM-DD): ");
         String startDate = checkInDate.format(DateTimeFormatter.ISO_DATE);
-        
+
         // Validate and Input Check-Out Date
         LocalDate checkOutDate = Validation.getCheckoutDate(s, "Enter end date (YYYY-MM-DD): ", checkInDate);
-        String endDate = checkOutDate.format(DateTimeFormatter.ISO_DATE);      
+        String endDate = checkOutDate.format(DateTimeFormatter.ISO_DATE);
 
         System.out.print("Enter number of rooms: ");
         int numberOfRooms = 0;
@@ -78,8 +183,8 @@ public class Main {
             } else {
                 System.out.println("Number of rooms cannot be less than 1. Please enter a valid positive integer.");
             }
-        } 
-        
+        }
+
         int[] adults = new int[numberOfRooms];
         int totalAdults = 0;
         String roomAdultsQuery = "adults=";
@@ -160,7 +265,7 @@ public class Main {
 
             InvertedIndex i = new InvertedIndex();
             PageRank pr = new PageRank();
-            getTopDeals(i.index(files));
+            PageRank.getTopDeals(i.index(files));
             System.out.println("Enter a hotel name to search : ");
             Scanner sn = new Scanner(System.in);
             String searchElement = sn.nextLine();
@@ -170,6 +275,9 @@ public class Main {
               for(InvertedIndex.SearchResult sr : i.search(words[k].toLowerCase())){
                   searchResponses.add(sr.getJsonObjectDetails());
               }
+            }
+            if(searchResponses.size() > 1){
+                pr.getPageRank(searchElement, files);
             }
             Set<JsonObject> set = new LinkedHashSet<>(searchResponses);
             searchResponses = new ArrayList<>(set);
@@ -190,10 +298,6 @@ public class Main {
             }
 
 
-            //Check page rank if the hotel name is found in more than one document
-            if(searchResponses.size() > 1){
-                pr.getPageRank(searchElement, files);
-            }
         }catch (Exception e){
             e.printStackTrace();
         }
