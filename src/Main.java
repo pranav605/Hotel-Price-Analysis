@@ -7,6 +7,7 @@ import HotelPriceAnalysis.InvertedIndex;
 import HotelPriceAnalysis.PageRank;
 import Validation.Validation;
 import java.util.List;
+import java.util.Map;
 
 public class Main {
     public static void main(String[] args) {
@@ -53,16 +54,12 @@ public class Main {
         // Validate and Input Check-in Date
         LocalDate checkInDate = Validation.getValidatedDate(s, "Enter start date (YYYY-MM-DD): ");
         String startDate = checkInDate.format(DateTimeFormatter.ISO_DATE);
-        System.out.println(startDate);
         
         // Validate and Input Check-Out Date
         LocalDate checkOutDate = Validation.getCheckoutDate(s, "Enter end date (YYYY-MM-DD): ", checkInDate);
-        String endDate = checkOutDate.format(DateTimeFormatter.ISO_DATE);
-        System.out.println(endDate);       
-
+        String endDate = checkOutDate.format(DateTimeFormatter.ISO_DATE);      
 
         System.out.print("Enter number of rooms: ");
-        
         int numberOfRooms = 0;
         while (numberOfRooms < 1) {
             System.out.print("Enter number of rooms: ");
@@ -100,7 +97,6 @@ public class Main {
         hc.writeParametersToJson(p, parameterJsonFile);
 
         String cityInJSON = cityName + ", " + provinceState + ", " + country;
-
         String filePath = "HotelsCA.json";
         File file = new File(filePath);
         if (!file.exists()) {
