@@ -9,9 +9,11 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Scanner;
 
 import static HotelPriceAnalysis.PageRank.getTopDeals;
+import Validation.Validation;
+import java.util.List;
+import java.util.Map;
 
 
 public class Main {
@@ -23,36 +25,61 @@ public class Main {
         Scanner s = new Scanner(System.in);
         LocalDate currentDate = LocalDate.now();
 
-        System.out.print("Enter city: ");
-        String cityName = s.nextLine();
-        System.out.print("Enter province/state: ");
-        String provinceState = s.nextLine();
-        System.out.print("Enter country: ");
-        String country = s.nextLine();
-        System.out.print("Enter start date (YYYY-MM-DD): ");
-        String startDate = s.next();
-        LocalDate startEnteredDate = LocalDate.parse(startDate, DateTimeFormatter.ISO_DATE);
-        while (startEnteredDate.isBefore(currentDate)) {
-            System.out.print("Entered Date is in the past. Enter again : ");
-            startDate = s.next();
-            startEnteredDate = LocalDate.parse(startDate, DateTimeFormatter.ISO_DATE);
+        // Validate and input City 
+        String cityName;
+        while (true) {
+            System.out.print("Enter city name: ");
+            cityName = s.nextLine().trim();
+            if (!cityName.isEmpty() && cityName.matches("[a-zA-Z]+")) {
+                break;
+            }
+            System.out.println("Invalid city name. Please enter a valid name.");
+        }
+        
+     // Validate and Input Province/State
+        String provinceState;
+        while (true) {
+            System.out.print("Enter province/state: ");
+            provinceState = s.nextLine().trim();
+            if (!provinceState.isEmpty() && provinceState.matches("[a-zA-Z]+")) {
+                break;
+            }
+            System.out.println("Invalid province/state. Please enter a valid name.");
         }
 
-        System.out.print("Enter end date (YYYY-MM-DD): ");
-        String endDate = s.next();
-        LocalDate endEnteredDate = LocalDate.parse(endDate, DateTimeFormatter.ISO_DATE);
-        while (endEnteredDate.isBefore(startEnteredDate)) {
-            System.out.print("Entered Date is before start date. Enter again : ");
-            endDate = s.next();
-            endEnteredDate = LocalDate.parse(endDate, DateTimeFormatter.ISO_DATE);
+        // Validate and Input Country
+        String country;
+        while (true) {
+            System.out.print("Enter country: ");
+            country = s.nextLine().trim();
+            if (!country.isEmpty() && country.matches("[a-zA-Z]+")) {
+                break;
+            }
+            System.out.println("Invalid country. Please enter a valid name.");
         }
+        
+        // Validate and Input Check-in Date
+        LocalDate checkInDate = Validation.getValidatedDate(s, "Enter start date (YYYY-MM-DD): ");
+        String startDate = checkInDate.format(DateTimeFormatter.ISO_DATE);
+        
+        // Validate and Input Check-Out Date
+        LocalDate checkOutDate = Validation.getCheckoutDate(s, "Enter end date (YYYY-MM-DD): ", checkInDate);
+        String endDate = checkOutDate.format(DateTimeFormatter.ISO_DATE);      
 
         System.out.print("Enter number of rooms: ");
-        int numberOfRooms = s.nextInt();
+        int numberOfRooms = 0;
         while (numberOfRooms < 1) {
-            System.out.print("Number of rooms can not be less than 1. Enter again: ");
-            numberOfRooms = s.nextInt();
-        }
+            System.out.print("Enter number of rooms: ");
+            String roomInput = s.nextLine();
+
+            // Check if the input is a positive integer (excluding zero)
+            if (roomInput.matches("\\d+") && !roomInput.equals("0")) {
+                numberOfRooms = Integer.parseInt(roomInput);
+            } else {
+                System.out.println("Number of rooms cannot be less than 1. Please enter a valid positive integer.");
+            }
+        } 
+        
         int[] adults = new int[numberOfRooms];
         int totalAdults = 0;
         String roomAdultsQuery = "adults=";
@@ -77,7 +104,6 @@ public class Main {
         hc.writeParametersToJson(p, parameterJsonFile);
 
         String cityInJSON = cityName + ", " + provinceState + ", " + country;
-
         String filePath = "HotelsCA.json";
         File file = new File(filePath);
         if (!file.exists()) {
@@ -171,6 +197,20 @@ public class Main {
         }catch (Exception e){
             e.printStackTrace();
         }
-
+        
+        // Integrate search frequency
+        try {
+            Searchfrequency.updateSearches();
+            Map<String, Integer> searchFrequency = Searchfrequency.indexMultipleFiles();
+            System.out.println("Do you want to see the most searched destinations? (yes/no): ");
+            String choice = s.next();
+            if (choice.equalsIgnoreCase("yes")) {
+                Searchfrequency.displaySearchFrequency(searchFrequency);
+            } else {
+                System.out.println("Thank you!");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
