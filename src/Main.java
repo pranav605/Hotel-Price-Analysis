@@ -1,13 +1,17 @@
 import HotelPriceAnalysis.InvertedIndex;
 import HotelPriceAnalysis.PageRank;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
-import java.util.List;
-import java.util.Scanner;
+import javax.naming.directory.SearchResult;
+import java.util.*;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+
+import static HotelPriceAnalysis.PageRank.getTopDeals;
 
 
 public class Main {
@@ -88,7 +92,7 @@ public class Main {
 
         String baseURL = "https://ca.hotels.com/Hotel-Search?"+roomAdultsQuery+"&destination="+cityName+"%2C"+provinceState+"%2C"+country+"&endDate="+endDate+"&sort=RECOMMENDED&startDate="+startDate;
         hc.crawl(baseURL, cityInJSON, filePath, "hotels");
-
+        hc.wrapJsonWithArray(filePath);
         filePath = "ExpediaCA.json";
         file = new File(filePath);
         if (!file.exists()) {
@@ -103,6 +107,7 @@ public class Main {
 
         baseURL = "https://www.expedia.ca/Hotel-Search?"+roomAdultsQuery+"&destination="+cityName+"%2C"+provinceState+"%2C"+country+"&endDate="+endDate+"&sort=RECOMMENDED&startDate="+startDate;
         hc.crawl(baseURL, cityInJSON, filePath, "expedia");
+        hc.wrapJsonWithArray(filePath);
 
         filePath = "BookingCA.json";
         file = new File(filePath);
@@ -118,22 +123,49 @@ public class Main {
 
         baseURL = "https://www.booking.com/searchresults.html?ss="+cityName+"%2C"+provinceState+"%2C"+country+"&checkin="+startDate+"&checkout="+endDate+"&group_adults="+totalAdults+"&no_rooms="+numberOfRooms+"&group_children=0";
         hc.crawl(baseURL, cityInJSON, filePath, "booking");
+        hc.wrapJsonWithArray(filePath);
+
         //Display the top search results based on suggestion criteria
         //Prompt the user to search by hotel name
 
 
-        String[] files = {"D:\\ACC Project\\ACCProject\\HotelsCA.json","D:\\ACC Project\\ACCProject\\BookingCA.json","D:\\ACC Project\\ACCProject\\ExpediaCA.json"};
+        String[] files = {"D:\\ACC Project\\ACCProject\\HotelsCA.json","D:\\ACC Project\\ACCProject\\ExpediaCA.json","D:\\ACC Project\\ACCProject\\BookingCA.json"};
         try{
 
             InvertedIndex i = new InvertedIndex();
             PageRank pr = new PageRank();
-            i.index(files);
+            getTopDeals(i.index(files));
             System.out.println("Enter a hotel name to search : ");
             Scanner sn = new Scanner(System.in);
             String searchElement = sn.nextLine();
-            List<Integer> docIdsForPageRank = i.search(searchElement);
+            String[] words = searchElement.split(" ");
+            List<JsonObject> searchResponses = new ArrayList<>();
+            for (int k = 0;k<words.length; k++){
+              for(InvertedIndex.SearchResult sr : i.search(words[k].toLowerCase())){
+                  searchResponses.add(sr.getJsonObjectDetails());
+              }
+            }
+            Set<JsonObject> set = new LinkedHashSet<>(searchResponses);
+            searchResponses = new ArrayList<>(set);
+            System.out.println("Search results :");
+            if(searchResponses.isEmpty()){
+                System.out.println("No results found !!");
+            }else{
+                for(JsonObject o : searchResponses){
+                    System.out.println("-----------------------------------------------");
+                    System.out.println("Hotel Name        : "+o.get("name"));
+                    System.out.println("Location          : "+o.get("location"));
+                    System.out.println("Review Score      : "+o.get("reviewScore"));
+                    System.out.println("Total Price in CAD: "+o.get("calculatedPrice"));
+                    System.out.println("Rank Score        : "+o.get("rankScore"));
+                    System.out.println("URL               : "+o.get("URL"));
+                    System.out.println("-----------------------------------------------");
+                }
+            }
+
+
             //Check page rank if the hotel name is found in more than one document
-            if(docIdsForPageRank.size() > 1){
+            if(searchResponses.size() > 1){
                 pr.getPageRank(searchElement, files);
             }
         }catch (Exception e){
