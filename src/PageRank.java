@@ -1,5 +1,3 @@
-package HotelPriceAnalysis;
-
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
@@ -125,11 +123,12 @@ public class PageRank {
     }
     private static List<Page> rankPages(List<String> pages, String[] keywords) {
         List<Page> rankedPages = new ArrayList<>();
-
+        int[] frequencies = FrequencyCount.searchSpecificWordFrequencies(keywords[0]);
+        System.out.println(frequencies);
         // Calculate the ranking for each page
         for (int i = 0; i < pages.size(); i++) {
             String pageContent = pages.get(i);
-            int rank = calculateRank(pageContent, keywords);
+            int rank = frequencies[i];
             rankedPages.add(new Page(i + 1, rank));
         }
 
