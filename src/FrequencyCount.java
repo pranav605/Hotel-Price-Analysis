@@ -21,7 +21,7 @@ public class FrequencyCount {
 
     // Below function returns an array which shows frequency count for a search word in various files
     public static int[] searchSpecificWordFrequencies(String searchWord) {
-        String[] fileArr = {"src/data/BookingCA.json", "src/data/HotelsCA.json", "src/data/ExpediaCA.json"};
+        String[] fileArr = {"D:\\ACC Project\\ACCProject\\HotelsCA.json","D:\\ACC Project\\ACCProject\\AirbnbNew.json","D:\\ACC Project\\ACCProject\\BookingCA.json"};
         int[] wordFrequencyArrayHotelData = new int[fileArr.length];
         Gson gsonObj = new Gson();
         // Updated TypeToken for JSON deserialization with Google's Gson library

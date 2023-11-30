@@ -74,7 +74,10 @@ public class PageRank {
                 float rating = 0;
                 String ratingString = jo.get("reviewScore").getAsString();
                 if(!ratingString.equals("Not found!")){
-                    rating = Float.parseFloat(ratingString.split(" ")[0]);
+                    if(!ratingString.isEmpty()){
+                        rating = Float.parseFloat(ratingString.split(" ")[0]);
+
+                    }
                 }
                 int noOfAmenities = jo.get("amenities").getAsJsonArray().size();
                 float price = 9999999;

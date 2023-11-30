@@ -365,6 +365,78 @@ public class HotelsCrawler {
         driver.quit();
     }
 
+    public static void crawlAirbnb(String url, List<HotelData> hotels, String city, String filePath, String site, String title, String rating, String review) {
+        FirefoxOptions opts = new FirefoxOptions();
+        opts.addArguments("--headless");
+        WebDriver driver = new FirefoxDriver(opts);
+        driver.get(url);
+        System.out.println("Connected URL: "+url);
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(45));
+        String name = "", stars5Rating = "", location = "";
+        String reviewScore = "", reviewMessage = "", numberOfReviews = "";
+        List<String> amenities = new ArrayList<>();
+        String h3Tag = "", price = "", totalPrice = "";
+        List<String> singleRoomAmenities = new ArrayList<>();
+        List<Room> rooms = new ArrayList<>();
+        // Title Element
+        name = title;
+        stars5Rating = rating;
+        reviewScore = rating;
+        numberOfReviews = review;
+        // Amenities Element
+        System.out.println("Crawling Amenities Element...");
+        try {
+            WebElement amenitiesElement = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("[data-section-id='AMENITIES_DEFAULT']"))).findElement(By.tagName("section")).findElements(By.xpath("./div")).get(1);
+            List<WebElement> liList = amenitiesElement.findElements(By.xpath("./div"));
+            for (WebElement li: liList) {
+                String liText = li.getText();
+                amenities.add(liText);
+            }
+        } catch (Exception e) {
+            System.out.println("Main Amenities Element not found!");
+        }
+        // Room Element
+        try {
+            WebElement mainRoomsElem = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("[aria-labelledby='sleeping-arrangements-title']")));
+            List<WebElement> liElems = mainRoomsElem.findElement(By.tagName("ul")).findElements(By.tagName("li"));
+            for (WebElement li: liElems) {
+                singleRoomAmenities = new ArrayList<>();
+                try {
+                    WebElement btn = li.findElement(By.tagName("button"));
+                    List<WebElement> divTags = btn.findElement(By.xpath("./div")).findElements(By.xpath("./div"));
+                    h3Tag = divTags.get(1).getText();
+                    String desc = divTags.get(2).getText();
+                    singleRoomAmenities.add(desc);
+                } catch (Exception e) {
+                    h3Tag = "Not found!";
+                }
+                try {
+                    WebElement mainPriceElem = li.findElement(By.cssSelector("[data-testid='book-it-default']"));
+                    WebElement pricePerNightElem = mainPriceElem.findElement(By.tagName("span"));
+                    price = pricePerNightElem.getText().split("\n")[0];
+                } catch (Exception e) {
+                    price = "Not found!";
+                }
+                try {
+                    WebElement priceWrapper = li.findElement(By.cssSelector("[data-section-id='BOOK_IT_SIDEBAR']"));
+                    WebElement totalPriceContainer = priceWrapper.findElement(By.xpath("./div")).findElement(By.xpath("./div")).findElement(By.xpath("./div")).findElements(By.xpath("./div")).get(2);
+                    WebElement totalPriceElem = totalPriceContainer.findElement(By.tagName("section")).findElements(By.xpath("./div")).get(1);
+                    totalPrice = totalPriceElem.getText();
+                } catch (Exception e) {
+                    totalPrice = "Not found!";
+                }
+                rooms.add(new Room(h3Tag, singleRoomAmenities, price, totalPrice));
+            }
+        } catch (Exception e) {
+            System.out.println("Main Rooms List Element not found!");
+        }
+        HotelData obj = new HotelData(name, stars5Rating, city, reviewScore, reviewMessage, numberOfReviews, rooms, amenities);
+        hotels.add(obj);
+        appendJsonToFile(filePath, obj, city);
+        System.out.println("-----Data added to json-----");
+        driver.quit();
+    }
+
     public static void crawl(String url, String cityInJSON, String filePath, String site) {
         FirefoxOptions opts = new FirefoxOptions();
         opts.addArguments("--headless");
@@ -374,7 +446,7 @@ public class HotelsCrawler {
 
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(45));
 
-        if(!site.equals("booking")) {
+        if(site.equals("hotels")) {
             wait.until(tempDriver -> {
                 String currentUrl = tempDriver.getCurrentUrl();
                 return currentUrl != null && !currentUrl.equals(url);
@@ -385,21 +457,10 @@ public class HotelsCrawler {
             System.out.println("Connected URL: " + currURL);
         }
 
-        WebElement btn = wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("button")));
-        if (btn != null) {
-            String btnText = btn.getText();
-            if (site.equals("expedia")) {
-                while (btnText.equals("Try again")) {
-                    btn.click();
-                    btn = wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("button")));
-                    btnText = btn.getText();
-                }
-            }
-        }
 
         wait = new WebDriverWait(driver, Duration.ofSeconds(45));
 
-        if (!site.equals("booking")) {
+        if (site.equals("hotels")) {
             try {
                 WebElement searchResultSection = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("[data-stid='section-results']")));
                 WebElement listingSection = searchResultSection.findElement(By.cssSelector("[data-stid='property-listing-results']"));
@@ -426,7 +487,8 @@ public class HotelsCrawler {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } else {
+        }
+        if(site.equals("booking")){
             try {
                 List<WebElement> cards = driver.findElements(By.cssSelector("[data-testid='property-card-container']"));
 
@@ -447,10 +509,50 @@ public class HotelsCrawler {
                 e.printStackTrace();
             }
         }
+        if(site.equals("airbnb")) {
+            try {
+                WebElement siteContent = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("[id='site-content']")));
+
+                Map<String, List<HotelData>> hotelData = new HashMap<>();
+                List<HotelData> cityHotels = new ArrayList<>();
+
+                List<WebElement> hotelCards = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("[itemprop='itemListElement']")));
+                for (WebElement card: hotelCards) {
+                    WebElement container = card.findElement(By.cssSelector("[data-testid='card-container']"));
+                    WebElement aTag = container.findElement(By.tagName("a"));
+                    if (aTag != null) {
+                        String link = aTag.getAttribute("href");
+                        if (!link.isEmpty()) {
+                            String title = "", rating = "", review = "";
+                            try {
+                                WebElement titleElement = card.findElement(By.cssSelector("[data-testid='listing-card-title']"));
+                                title = titleElement.getText();
+                            } catch (Exception e) {
+                                title = "Not found!";
+                            }
+                            try {
+                                WebElement ratingReviewElement = container.findElement(By.xpath("./div")).findElements(By.xpath("./div")).get(1).findElement(By.xpath("./span")).findElements(By.tagName("span")).get(1);
+                                String[] rateRevArr = ratingReviewElement.getText().split(" ");
+                                rating = rateRevArr[0];
+                                review = rateRevArr[1];
+                            } catch (Exception e) {
+                                rating = "Not found!";
+                                review = "Not found!";
+                            }
+                            System.out.println(title+" - "+rating +" - "+ review);
+                            crawlAirbnb(link, cityHotels, cityInJSON, filePath, site, title, rating, review);
+                        }
+                    }
+                    System.out.println("------");
+                }
+                hotelData.put(cityInJSON, cityHotels);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         driver.quit();
     }
-
     private static void appendJsonToFile(String filePath, HotelData hotelData, String city) {
         try {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -467,6 +569,17 @@ public class HotelsCrawler {
             cityHotels.add(hotelData);
             existingMap.put(city, cityHotels);
             Files.write(Paths.get(filePath), gson.toJson(existingMap).getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void wrapJsonWithArray(String filePath) {
+        try {
+            String existingContent = new String(Files.readAllBytes(Paths.get(filePath)));
+            String wrappedContent = "[" + existingContent + "]";
+            Files.write(Paths.get(filePath), wrappedContent.getBytes());
+            System.out.println("JSON wrapped successfully!");
         } catch (IOException e) {
             e.printStackTrace();
         }
