@@ -18,11 +18,12 @@ public class FrequencyCount {
         List<String> roomFacilities;
     }
 
-    // Call this method from another file, passing only the search word
+  // Below function returns array which shows frequency count for searchword in various files
     public static int[] searchSpecificWordFrequencies(String searchWord) {
         String[] fileArr = {"src/data/BookingCA.json", "src/data/HotelsCA.json", "src/data/ExpediaCA.json"};
-        int[] wordFrequencyArray = new int[fileArr.length];
+        int[] wordFrequencyArrayHotelData = new int[fileArr.length];
         Gson gsonObj = new Gson();
+        // typeObjGson used for JSON deserialization with Google's Gson library
         Type typeObjGson = new TypeToken<Map<String, List<HotelData>>>(){}.getType();
 
         int fileIndex = 0;
@@ -32,12 +33,12 @@ public class FrequencyCount {
             try (FileReader fReader = new FileReader(HotelDataFileName)) {
                 Map<String, List<HotelData>> hotelsData = gsonObj.fromJson(fReader, typeObjGson);
                 processHotelData(hotelsData, wordCountTM);
-                wordFrequencyArray[fileIndex++] = wordCountTM.getOrDefault(searchWord, 0);
+                wordFrequencyArrayHotelData[fileIndex++] = wordCountTM.getOrDefault(searchWord, 0);
             } catch (Exception e) {
                 System.out.println("Error processing file: " + HotelDataFileName);
             }
         }
-        return wordFrequencyArray;
+        return wordFrequencyArrayHotelData;
     }
 
     private static void processHotelData(Map<String, List<HotelData>> hotelsData, TreeMap<String, Integer> wordCountTM) {
@@ -69,9 +70,12 @@ public class FrequencyCount {
 
     private static void processText(String text, TreeMap<String, Integer> wordCountTM) {
         if (text != null) {
+        	// Split the text into words using non-word characters as delimiters
             String[] words = text.toLowerCase().split("\\W+");
             for (String word : words) {
+            	// Check if the word is non-empty and not just a number
                 if (!word.isEmpty() && !word.matches("\\d+")) {
+                	// Increment the word count in the TreeMap
                     wordCountTM.put(word, wordCountTM.getOrDefault(word, 0) + 1);
                 }
             }
